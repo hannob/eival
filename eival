@@ -1,0 +1,37 @@
+#!/usr/bin/python3
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+import argparse
+import os
+import pathlib
+import sys
+import json
+
+import xmltodict
+import saxonche
+
+EDIR = os.path.dirname(os.path.realpath(__file__))
+XSLT = f"{EDIR}/EN16931-CII-validation.xslt"
+
+ap = argparse.ArgumentParser()
+ap.add_argument("files", nargs="+")
+ap.add_argument("-v", "--verbose", action="store_true")
+args = ap.parse_args()
+
+for fn in args.files:
+    xmlcontent = pathlib.Path(fn).read_text()
+    with saxonche.PySaxonProcessor(license=False) as proc:
+        xsltproc = proc.new_xslt30_processor()
+        document = proc.parse_xml(xml_text=xmlcontent)
+        executable = xsltproc.compile_stylesheet(stylesheet_file=XSLT)
+        output = executable.transform_to_string(xdm_node=document)
+
+jj = xmltodict.parse(output)
+
+if "svrl:failed-assert" in jj["svrl:schematron-output"]:
+    print(f"{sys.argv[1]} invalid")
+    if args.verbose:
+        print(json.dumps(jj["svrl:schematron-output"]["svrl:failed-assert"], indent=4))
+else:
+    print(f"{sys.argv[1]} valid")
