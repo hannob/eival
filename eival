@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: EUPL-1.2
 
 import argparse
+import json
 import os
 import pathlib
 import sys
-import json
 
-import xmltodict
 import saxonche
+import xmltodict
 
 EDIR = os.path.dirname(os.path.realpath(__file__))
 XSLT = f"{EDIR}/EN16931-CII-validation.xslt"
