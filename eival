@@ -22,6 +22,8 @@ args = ap.parse_args()
 for fn in args.files:
     xmlcontent = pathlib.Path(fn).read_text()
     with saxonche.PySaxonProcessor(license=False) as proc:
+        # Prevent XXE: disallow access to any type of URL
+        proc.set_configuration_property("http://saxon.sf.net/feature/allowedProtocols", "")
         xsltproc = proc.new_xslt30_processor()
         document = proc.parse_xml(xml_text=xmlcontent)
         executable = xsltproc.compile_stylesheet(stylesheet_file=XSLT)
