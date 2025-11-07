@@ -6,34 +6,35 @@ import argparse
 import json
 import os
 import pathlib
-import sys
 
 import saxonche
 import xmltodict
 
 EDIR = os.path.dirname(os.path.realpath(__file__))
-XSLT = f"{EDIR}/EN16931-CII-validation.xslt"
 
 ap = argparse.ArgumentParser()
 ap.add_argument("files", nargs="+")
 ap.add_argument("-v", "--verbose", action="store_true")
 args = ap.parse_args()
 
+proc = saxonche.PySaxonProcessor(license=False)
+# Prevent XXE: disallow access to any type of URL
+proc.set_configuration_property("http://saxon.sf.net/feature/allowedProtocols", "")
+xsltproc = proc.new_xslt30_processor()
+
 for fn in args.files:
     xmlcontent = pathlib.Path(fn).read_text()
-    with saxonche.PySaxonProcessor(license=False) as proc:
-        # Prevent XXE: disallow access to any type of URL
-        proc.set_configuration_property("http://saxon.sf.net/feature/allowedProtocols", "")
-        xsltproc = proc.new_xslt30_processor()
-        document = proc.parse_xml(xml_text=xmlcontent)
-        executable = xsltproc.compile_stylesheet(stylesheet_file=XSLT)
-        output = executable.transform_to_string(xdm_node=document)
+    document = proc.parse_xml(xml_text=xmlcontent)
 
-jj = xmltodict.parse(output)
-
-if "svrl:failed-assert" in jj["svrl:schematron-output"]:
-    print(f"{sys.argv[1]} invalid")
-    if args.verbose:
-        print(json.dumps(jj["svrl:schematron-output"]["svrl:failed-assert"], indent=4))
-else:
-    print(f"{sys.argv[1]} valid")
+    isvalid = "valid"
+    for rtype in ["CII", "UBL"]:
+        xsltfile = f"{EDIR}/EN16931-{rtype}-validation.xslt"
+        xsltp = xsltproc.compile_stylesheet(stylesheet_file=xsltfile)
+        out = xsltp.transform_to_string(xdm_node=document)
+        jj = xmltodict.parse(out)
+        if "svrl:failed-assert" in jj["svrl:schematron-output"]:
+            isvalid = "invalid"
+            if args.verbose:
+                print(f"{rtype} validation errors:")
+                print(json.dumps(jj["svrl:schematron-output"]["svrl:failed-assert"], indent=4))
+    print(f"{fn} {isvalid}")
