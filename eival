@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import pathlib
+import xml.etree.ElementTree
 
 import saxonche
 import xmltodict
@@ -24,17 +25,26 @@ xsltproc = proc.new_xslt30_processor()
 
 for fn in args.files:
     xmlcontent = pathlib.Path(fn).read_text()
+    roottag = xml.etree.ElementTree.fromstring(xmlcontent).tag.split("}")[-1]
+    if roottag == "CrossIndustryInvoice":
+        rtype = "CII"
+    elif roottag == "Invoice":
+        rtype = "UBL"
+    elif roottag == "M_INVOIC":
+        rtype = "EDIFACT"
+    else:
+        print("{fn} unsupported type")
+
     document = proc.parse_xml(xml_text=xmlcontent)
 
-    isvalid = "valid"
-    for rtype in ["CII", "UBL"]:
-        xsltfile = f"{EDIR}/EN16931-{rtype}-validation.xslt"
-        xsltp = xsltproc.compile_stylesheet(stylesheet_file=xsltfile)
-        out = xsltp.transform_to_string(xdm_node=document)
-        jj = xmltodict.parse(out)
-        if "svrl:failed-assert" in jj["svrl:schematron-output"]:
-            isvalid = "invalid"
-            if args.verbose:
-                print(f"{rtype} validation errors:")
-                print(json.dumps(jj["svrl:schematron-output"]["svrl:failed-assert"], indent=4))
-    print(f"{fn} {isvalid}")
+    xsltfile = f"{EDIR}/EN16931-{rtype}-validation.xslt"
+    xsltp = xsltproc.compile_stylesheet(stylesheet_file=xsltfile)
+    out = xsltp.transform_to_string(xdm_node=document)
+    jj = xmltodict.parse(out)
+    if "svrl:failed-assert" in jj["svrl:schematron-output"]:
+        print(f"{fn} invalid")
+        if args.verbose:
+            print(f"{rtype} validation errors:")
+            print(json.dumps(jj["svrl:schematron-output"]["svrl:failed-assert"], indent=4))
+    else:
+        print(f"{fn} valid")
