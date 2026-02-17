@@ -33,7 +33,8 @@ for fn in args.files:
     elif roottag == "M_INVOIC":
         rtype = "EDIFACT"
     else:
-        print("{fn} unsupported type")
+        print(f"{fn}: unsupported type")
+        continue
 
     document = proc.parse_xml(xml_text=xmlcontent)
 
