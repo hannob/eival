@@ -12,3 +12,10 @@ Union under the EUPL-1.2 license](
 https://github.com/ConnectingEurope/eInvoicing-EN16931/blob/master/cii/xslt/EN16931-CII-validation.xslt).
 The script and all other artifacts in this repository are shared under the same
 licensing conditions.
+
+# misc
+
+Written by [Hanno Böck](https://itsec.hboeck.de/).
+
+See also: [Security Issues with Electronic Invoices and EU eInvoincing](
+https://invoice.secvuln.info/)
