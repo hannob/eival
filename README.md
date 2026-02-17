@@ -2,7 +2,8 @@
 
 Simple Python script to validate European eInvoicing standard EN 16931 in Python.
 
-Requires installation of [saxonche](https://pypi.org/project/saxonche/).
+Requires installation of [saxonche](https://pypi.org/project/saxonche/) and [xmltodict](
+https://pypi.org/project/xmltodict/).
 
 # copyright
 
