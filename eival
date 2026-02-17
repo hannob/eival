@@ -6,8 +6,8 @@ import argparse
 import json
 import os
 import pathlib
-import xml.etree.ElementTree
 import sys
+import xml.etree.ElementTree
 
 import saxonche
 import xmltodict
