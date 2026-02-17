@@ -7,6 +7,7 @@ import json
 import os
 import pathlib
 import xml.etree.ElementTree
+import sys
 
 import saxonche
 import xmltodict
@@ -23,6 +24,7 @@ proc = saxonche.PySaxonProcessor(license=False)
 proc.set_configuration_property("http://saxon.sf.net/feature/allowedProtocols", "")
 xsltproc = proc.new_xslt30_processor()
 
+retval = 0
 for fn in args.files:
     xmlcontent = pathlib.Path(fn).read_text()
     roottag = xml.etree.ElementTree.fromstring(xmlcontent).tag.split("}")[-1]
@@ -34,6 +36,7 @@ for fn in args.files:
         rtype = "EDIFACT"
     else:
         print(f"{fn}: unsupported type")
+        retval |= 2
         continue
 
     document = proc.parse_xml(xml_text=xmlcontent)
@@ -44,8 +47,11 @@ for fn in args.files:
     jj = xmltodict.parse(out)
     if "svrl:failed-assert" in jj["svrl:schematron-output"]:
         print(f"{fn} invalid")
+        retval |= 1
         if args.verbose:
             print(f"{rtype} validation errors:")
             print(json.dumps(jj["svrl:schematron-output"]["svrl:failed-assert"], indent=4))
     else:
         print(f"{fn} valid")
+
+sys.exit(retval)
